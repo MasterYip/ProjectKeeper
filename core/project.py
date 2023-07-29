@@ -1,10 +1,15 @@
 import os
+import shutil
 import tempfile
 import json
+import zipfile
+import re
+import time
 from datetime import datetime
 from glob import glob
-from typing import overload
 from .const import *
+from .utils import getFileSha256, getDateStr, zipFolder
+
 
 class Project(dict):
 
@@ -45,6 +50,11 @@ class Project(dict):
         os.makedirs(self.tmpPath, exist_ok=True)
         os.makedirs(self.extPath, exist_ok=True)
         os.makedirs(self.arcPath, exist_ok=True)
+        self.meta['createTime'] = time.time()
+        self.meta['writeTime'] = time.time()
+        self.meta['backupTime'] = time.time()
+        self.meta['version'] = 0
+        # TODO:Type
         self.update()
         pass
     
@@ -61,13 +71,60 @@ class Project(dict):
     def _getLastModifiedTime(self):
         ltime = 0
         for file in glob(os.path.join(self.path, '**'), recursive=True):
-            print(file)
             if os.path.isfile(file) and os.path.getmtime(file) > ltime:
                 ltime = os.path.getmtime(file)
         return ltime
     
+    def _getRelativePath(self, path):
+        return os.path.relpath(path, self.path)
+    
     def _getLastModifiedDateTime(self):
         return datetime.fromtimestamp(self._getLastModifiedTime())
     
+    def _backupExtFiles(self, path):
+        # FIXME: Not finished
+        os.makedirs(os.path.join(path, PROJECT_EXT), exist_ok=True)
+        for file in glob(os.path.join(self.path, PROJECT_EXT, '**'), recursive=True):
+            relpath = self._getRelativePath(file)
+            if relpath not in [item[0] for item in self.extFiles] and os.path.isfile(file):
+                shutil.copy(file, os.path.join(path, relpath))
+                self.extFiles.append([relpath, getFileSha256(file)])
+    
+    def _backupArcFiles(self, path):
+        arcdir = os.path.join(path, PROJECT_ARC)
+        os.makedirs(arcdir, exist_ok=True)
+        for arcfile in glob(os.path.join(self.path, PROJECT_ARC, '*')):
+            name = os.path.basename(arcfile)
+            if name not in self.arcFiles and os.path.exists(arcfile):
+                if os.path.isdir(arcfile):
+                    zipFolder(arcfile, os.path.join(arcdir, name+'.zip'))
+                else:
+                    shutil.copy(arcfile, os.path.join(arcdir, name))
+                self.arcFiles.append(name)
+            
+    def _backupCommonFiles(self, path):
+        zipname = os.path.join(path, getDateStr() + ' ' + self.name + '.zip')
+        commonFiles = glob(os.path.join(self.path, '**'), recursive=True) +\
+                        glob(os.path.join(self.path, '**', '.*'), recursive=True)
+        with zipfile.ZipFile(zipname, 'w') as zipf:
+            for file in commonFiles:
+                relpath = self._getRelativePath(file)
+                print(relpath)
+                if re.match('(?!'+'|'.join([PROJECT_TMP, PROJECT_EXT, PROJECT_ARC])+').*', relpath) and os.path.isfile(file):
+                    zipf.write(file, relpath)
+    
+    def backup(self, path):
+        self.meta['writeTime'] = self._getLastModifiedTime()
+        self['meta'] = self.meta
+        self['extFiles'] = self.extFiles
+        self['arcFiles'] = self.arcFiles
+        
+        self._backupArcFiles(path)
+        self._backupExtFiles(path)
+        json.dump(self, open(os.path.join(self.path, PROJECT_CFG), 'w'), indent=4, ensure_ascii=False)
+        self._backupCommonFiles(path)
+        
+    
     def update(self):
         pass
+    

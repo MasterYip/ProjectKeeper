@@ -1,4 +1,4 @@
-from core import Project
+from core import *
 
 prj = Project('test\\prj1', create=True)
-print(prj._getLastModifiedDateTime())
+prj.backup("test\\bkp")
