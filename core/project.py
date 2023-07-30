@@ -85,7 +85,7 @@ class Project(dict):
         self._save()
                 
     def _getLastModifiedTime(self, depth=TRAVERSE_DEPTH):
-        ltime = 0
+        ltime = self.meta['writeTime']
         for file in traverseFolder(self.path, depth=depth, file_only=True):
             if os.path.getmtime(file) > ltime:
                 ltime = os.path.getmtime(file)
@@ -100,7 +100,6 @@ class Project(dict):
     def _save(self):
         """Save project config file."""
         # Aux Info
-        # self.meta['name'] = os.path.basename(self.path)
         self.meta['createDate'] = getDateStr(self.meta['createTime'])
         self.meta['backupDate'] = getDateStr(self.meta['backupTime'])
         self.meta['writeDate'] = getDateStr(self.meta['writeTime'])
@@ -112,7 +111,9 @@ class Project(dict):
                   indent=4, ensure_ascii=False)
 
     def _update(self):
+        """Update project config file."""
         self.meta['writeTime'] = self._getLastModifiedTime()
+        self._save()
     
     # Backup
     def _backupExtFiles(self, path):

@@ -18,10 +18,11 @@ def getDateStr(time=None):
     :param time: timestamp
     """
     # print(time)
-    if time:
+    if time is not None:
         try:
             return datetime.fromtimestamp(time).strftime('%Y%m%d')
         except:
+            # FIXME: Handle invalid time
             return '20200000'
     else:
         return datetime.now().strftime('%Y%m%d')

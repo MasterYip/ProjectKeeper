@@ -18,9 +18,9 @@ def modify(prj, *args, **kwargs):
         prj.meta['type'] = 5
 
 
-# prjMgr = ProjectMgr("test")
-prjMgr = ProjectMgr("D:\\SFTR")
-
+prjMgr = ProjectMgr("test")
+# prjMgr = ProjectMgr("D:\\SFTR")
+prjMgr.addProject("test", 1)
 # prjMgr._batchModify(modify)
 prjMgr.printProjects()
 # prjMgr._saveProjects()
