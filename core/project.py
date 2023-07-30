@@ -1,3 +1,4 @@
+from hmac import new
 from math import e
 import os
 import shutil
@@ -15,8 +16,8 @@ from .utils import getFileSha256, getDateStr, zipFolder, traverseFolder
 
 def isProject(path: str):
     return os.path.isdir(path) and\
-            (os.path.isfile(os.path.join(path, PROJECT_CFG)) or\
-             os.path.isfile(os.path.join(path, PROJECT_CFG_LEGACY)))
+        (os.path.isfile(os.path.join(path, PROJECT_CFG)) or
+         os.path.isfile(os.path.join(path, PROJECT_CFG_LEGACY)))
 
 
 class Project(dict):
@@ -63,7 +64,8 @@ class Project(dict):
         # self.subprojects = []
 
     def _load(self):
-        data = json.load(open(self.cfgPath, 'r', encoding='utf-8'), encoding='utf-8')
+        with open(self.cfgPath, 'r', encoding='utf-8') as cfgfile:
+            data = json.load(cfgfile, encoding='utf-8')
         self.meta = data.get('meta', {})
         self.extFiles = data.get('extFiles', [])
         self.arcFiles = data.get('arcFiles', [])
@@ -80,19 +82,24 @@ class Project(dict):
         self.meta['writeTime'] = project_data[3]
         # self.meta['backupMark'] = project_data[4] # Not used
         self.meta['version'] = project_data[5]
-        self.meta['type'] = PROJECT_TYPE[project_data[6]] if project_data[6]<len(PROJECT_TYPE) else TYPE_OTHER
+        self.meta['type'] = PROJECT_TYPE[project_data[6]
+                                         ] if project_data[6] < len(PROJECT_TYPE) else TYPE_OTHER
         # self.meta['type'] = project_data[6]
         self._save()
-                
+
+    def _getRelativePath(self, path):
+        """Get relative path of a file in project."""
+        return os.path.relpath(path, self.path)
+    
+    def _getAbsolutePath(self, relpath):
+        return os.path.join(self.path, relpath)
+
     def _getLastModifiedTime(self, depth=TRAVERSE_DEPTH):
         ltime = self.meta['writeTime']
         for file in traverseFolder(self.path, depth=depth, file_only=True):
             if os.path.getmtime(file) > ltime:
                 ltime = os.path.getmtime(file)
         return ltime
-
-    def _getRelativePath(self, path):
-        return os.path.relpath(path, self.path)
 
     def _getLastModifiedDateTime(self):
         return datetime.fromtimestamp(self._getLastModifiedTime())
@@ -103,41 +110,59 @@ class Project(dict):
         self.meta['createDate'] = getDateStr(self.meta['createTime'])
         self.meta['backupDate'] = getDateStr(self.meta['backupTime'])
         self.meta['writeDate'] = getDateStr(self.meta['writeTime'])
-        
+
         self['meta'] = self.meta
         self['extFiles'] = self.extFiles
         self['arcFiles'] = self.arcFiles
+        # Set it visible to read
+        os.system('attrib -h ' + '\"' + os.path.join(self.path, PROJECT_CFG) + '\"')
         json.dump(self, open(os.path.join(self.path, PROJECT_CFG), 'w', encoding="utf-8"),
                   indent=4, ensure_ascii=False)
+        # Set it invisible
+        os.system('attrib +h ' + '\"' + os.path.join(self.path, PROJECT_CFG) + '\"')
 
     def _update(self):
         """Update project config file."""
         self.meta['writeTime'] = self._getLastModifiedTime()
         self._save()
-    
-    # Backup
-    def _backupExtFiles(self, path):
-        # FIXME: Not finished
-        
+
+    # Analysis
+    def getNewExtFiles(self):
+        newExtFiles = []
         for file in glob(os.path.join(self.path, PROJECT_EXT, '**'), recursive=True):
             relpath = self._getRelativePath(file)
             if relpath not in [item[0] for item in self.extFiles] and os.path.isfile(file):
-                dst = os.path.join(path, relpath)
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                shutil.copy(file, dst)
-                self.extFiles.append([relpath, getFileSha256(file)])
+                newExtFiles.append([relpath, getFileSha256(file)])
+        return newExtFiles
+    
+    def getNewArcFiles(self):
+        newArcFiles = []
+        for arcfile in glob(os.path.join(self.path, PROJECT_ARC, '*')):
+            name = os.path.basename(arcfile)
+            if name not in self.arcFiles and os.path.exists(arcfile):
+                newArcFiles.append(name)
+        return newArcFiles
+
+    # Backup
+    def _backupExtFiles(self, path):
+        # FIXME: Not finished
+        for relpath, sha256 in self.getNewExtFiles():
+            src = self._getAbsolutePath(relpath)
+            dst = os.path.join(path, relpath)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy(src, dst)
+            self.extFiles.append([relpath, sha256])
 
     def _backupArcFiles(self, path):
         arcdir = os.path.join(path, PROJECT_ARC)
         os.makedirs(arcdir, exist_ok=True)
-        for arcfile in glob(os.path.join(self.path, PROJECT_ARC, '*')):
-            name = os.path.basename(arcfile)
-            if name not in self.arcFiles and os.path.exists(arcfile):
-                if os.path.isdir(arcfile):
-                    zipFolder(arcfile, os.path.join(arcdir, name+'.zip'))
-                else:
-                    shutil.copy(arcfile, os.path.join(arcdir, name))
-                self.arcFiles.append(name)
+        for name in self.getNewArcFiles():
+            src = os.path.join(self.path, PROJECT_ARC, name)
+            if os.path.isdir(src):
+                zipFolder(src, os.path.join(arcdir, name+'.zip'))
+            else:
+                shutil.copy(src, os.path.join(arcdir, name))
+            self.arcFiles.append(name)
         # Remove arcdir if empty
         if not os.listdir(arcdir):
             os.rmdir(arcdir)
@@ -160,9 +185,7 @@ class Project(dict):
 
         self._backupArcFiles(path)
         self._backupExtFiles(path)
-        
+
         if saveCfg:
             self._save()
         self._backupCommonFiles(path)
-
-

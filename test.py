@@ -20,8 +20,10 @@ def modify(prj, *args, **kwargs):
 
 prjMgr = ProjectMgr("test")
 # prjMgr = ProjectMgr("D:\\SFTR")
-prjMgr.addProject("test", 1)
+
+prjMgr.printProjects(detail=True)
+
+# prjMgr.addProject("test", 1)
 # prjMgr._batchModify(modify)
-prjMgr.printProjects()
 # prjMgr._saveProjects()
-# prjMgr.backupProjects("E:\\Temp\\bak", saveCfg=False)
+# prjMgr.backupProjects("test\\bak", saveCfg=False, bkpThresh=0)

@@ -9,7 +9,7 @@ from .const import *
 class ProjectMgr(object):
 
     def __init__(self, repoPath: str):
-        self.repoPath = repoPath
+        self.repoPath = os.path.abspath(repoPath)
         self.prjDict = dict([[key, []] for key in PROJECT_TYPE])
         # for dir in os.listdir(self.repoPath):
         #     basename = os.path.basename(dir)
@@ -42,7 +42,7 @@ class ProjectMgr(object):
             for prj in self.prjDict[key]:
                 prj._save()
 
-    def printProjects(self, bkpThresh=BACKUP_THRESHOLD):
+    def printProjects(self, detail=False, bkpThresh=BACKUP_THRESHOLD):
         for key in self.prjDict:
             print('['+PROJECT_TYPESTR[key]+']')
             for prj in self.prjDict[key]:
@@ -55,6 +55,11 @@ class ProjectMgr(object):
                               getDateStr(prj.meta['writeTime']), getDateStr(
                                   prj.meta['backupTime']),
                               prj.meta['version'], prj.meta['type'], bkptag))
+                if detail:
+                    if len(prj.getNewExtFiles()) > 0:
+                        print("  NewExtFiles:\n    " + "\n    ".join([item[0] for item in prj.getNewExtFiles()]))
+                    if len(prj.getNewArcFiles()) > 0:
+                        print("  NewArcFiles:\n    " + "\n    ".join([item for item in prj.getNewArcFiles()]))
 
     def addProject(self, name, type):
         """Add a new project"""
@@ -76,6 +81,6 @@ class ProjectMgr(object):
                 name = ' '.join([createdate, prj.meta['name']])
                 prjbakpath = os.path.join(
                     backupPath, PROJECT_TYPESTR[key], year, name)
-                print("Backup {0} to {1}".format(prj.meta['name'], prjbakpath))
                 if prj.meta['writeTime'] - prj.meta['backupTime'] >= bkpThresh * 86400:
+                    print("Backup {0} to {1}".format(prj.meta['name'], prjbakpath))
                     prj.backup(prjbakpath, saveCfg=saveCfg)
