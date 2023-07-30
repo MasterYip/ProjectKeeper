@@ -42,3 +42,25 @@ def zipFolder(folder_path, output_zip_path):
                 relative_path = os.path.relpath(file_path, folder_path)
                 zipf.write(file_path, relative_path) # FIXME: Handle long path
 
+
+def traverseFolder(dir, depth=-1, file_only=True):
+    """
+    A generator that traverses a folder
+    :param dir: folder path
+    :param depth: traverse depth, default -1 for unlimited
+    """
+    if depth != 0:
+        for item in os.listdir(dir):
+            path = os.path.join(dir, item)
+            if os.path.isdir(path):
+                if not file_only:
+                    yield path
+                if depth > 0:
+                    yield from traverseFolder(path, depth-1)
+                else:
+                    yield from traverseFolder(path)
+            elif os.path.isfile(path):
+                yield path
+    else:
+        return
+

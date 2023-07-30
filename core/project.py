@@ -10,7 +10,7 @@ import struct
 from datetime import datetime
 from glob import glob
 from .const import *
-from .utils import getFileSha256, getDateStr, zipFolder
+from .utils import getFileSha256, getDateStr, zipFolder, traverseFolder
 
 
 def isProject(path: str):
@@ -59,7 +59,7 @@ class Project(dict):
             self.meta['type'] = initType
         else:
             raise FileNotFoundError('Not a project.')
-
+        self._update()
         # self.subprojects = []
 
     def _load(self):
@@ -84,11 +84,10 @@ class Project(dict):
         # self.meta['type'] = project_data[6]
         self._save()
                 
-
-    def _getLastModifiedTime(self):
+    def _getLastModifiedTime(self, depth=TRAVERSE_DEPTH):
         ltime = 0
-        for file in glob(os.path.join(self.path, '**'), recursive=True):
-            if os.path.isfile(file) and os.path.getmtime(file) > ltime:
+        for file in traverseFolder(self.path, depth=depth, file_only=True):
+            if os.path.getmtime(file) > ltime:
                 ltime = os.path.getmtime(file)
         return ltime
 
@@ -98,6 +97,23 @@ class Project(dict):
     def _getLastModifiedDateTime(self):
         return datetime.fromtimestamp(self._getLastModifiedTime())
 
+    def _save(self):
+        """Save project config file."""
+        # Aux Info
+        # self.meta['name'] = os.path.basename(self.path)
+        self.meta['createDate'] = getDateStr(self.meta['createTime'])
+        self.meta['backupDate'] = getDateStr(self.meta['backupTime'])
+        self.meta['writeDate'] = getDateStr(self.meta['writeTime'])
+        
+        self['meta'] = self.meta
+        self['extFiles'] = self.extFiles
+        self['arcFiles'] = self.arcFiles
+        json.dump(self, open(os.path.join(self.path, PROJECT_CFG), 'w', encoding="utf-8"),
+                  indent=4, ensure_ascii=False)
+
+    def _update(self):
+        self.meta['writeTime'] = self._getLastModifiedTime()
+    
     # Backup
     def _backupExtFiles(self, path):
         # FIXME: Not finished
@@ -136,7 +152,7 @@ class Project(dict):
                 if re.match('(?!'+'|'.join([PROJECT_TMP, PROJECT_EXT, PROJECT_ARC])+').*', relpath) and os.path.isfile(file):
                     zipf.write(file, relpath)
 
-    def backup(self, path):
+    def backup(self, path, saveCfg=True):
         self.meta['writeTime'] = self._getLastModifiedTime()
         self.meta['backupTime'] = time.time()
         self.meta['version'] = self.meta['version'] + 1
@@ -144,18 +160,8 @@ class Project(dict):
         self._backupArcFiles(path)
         self._backupExtFiles(path)
         
-        self._save()
+        if saveCfg:
+            self._save()
         self._backupCommonFiles(path)
 
-    def _save(self):
-        # Aux Info
-        # self.meta['name'] = os.path.basename(self.path)
-        self.meta['createDate'] = getDateStr(self.meta['createTime'])
-        self.meta['backupDate'] = getDateStr(self.meta['backupTime'])
-        self.meta['writeDate'] = getDateStr(self.meta['writeTime'])
-        
-        self['meta'] = self.meta
-        self['extFiles'] = self.extFiles
-        self['arcFiles'] = self.arcFiles
-        json.dump(self, open(os.path.join(self.path, PROJECT_CFG), 'w', encoding="utf-8"),
-                  indent=4, ensure_ascii=False)
+
