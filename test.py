@@ -18,12 +18,16 @@ def modify(prj, *args, **kwargs):
         prj.meta['type'] = 5
 
 
-prjMgr = ProjectMgr("test")
-# prjMgr = ProjectMgr("D:\\SFTR")
+# prjMgr = ProjectMgr("test")
+prjMgr = ProjectMgr("D:\\SFTR")
 
-prjMgr.printProjects(detail=True)
+# prjMgr.printProjects(detail=True)
+prjMgr.backupProjects("D:\\SFTR\\PlayerOS\\6 Backup\\Backup")
+# prjMgr.backupProjects("test\\bak", saveCfg=False, bkpThresh=0)
 
-# prjMgr.addProject("test", 1)
+
+# Batch Modify
 # prjMgr._batchModify(modify)
 # prjMgr._saveProjects()
-# prjMgr.backupProjects("test\\bak", saveCfg=False, bkpThresh=0)
+
+# prjMgr.addProject("test", 1)

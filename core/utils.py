@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+
 def getFileSha256(filename):
     sha256_hash = hashlib.sha256()
     with open(filename, "rb") as f:
@@ -11,6 +12,7 @@ def getFileSha256(filename):
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
+
 
 def getDateStr(time=None):
     """
@@ -27,12 +29,14 @@ def getDateStr(time=None):
     else:
         return datetime.now().strftime('%Y%m%d')
 
+
 def datestr2timestamp(datestr):
     """
     Convert date string to timestamp
     :param datestr: date string in format YYYYMMDD
     """
     return datetime.strptime(datestr, '%Y%m%d').timestamp()
+
 
 def zipFolder(folder_path, output_zip_path):
     with zipfile.ZipFile(output_zip_path, 'w') as zipf:
@@ -41,7 +45,14 @@ def zipFolder(folder_path, output_zip_path):
                 file_path = os.path.join(root, file)
                 # Calculate the relative path for the ZIP
                 relative_path = os.path.relpath(file_path, folder_path)
-                zipf.write(file_path, relative_path) # FIXME: Handle long path
+                zipf.write(file_path, relative_path)  # FIXME: Handle long path
+
+
+def isFolderEmpty(folder_path):
+    if not os.path.exists(folder_path):
+        return False  # Folder doesn't exist, so not empty
+    
+    return len(os.listdir(folder_path)) == 0
 
 
 def traverseFolder(dir, depth=-1, file_only=True):
@@ -64,4 +75,3 @@ def traverseFolder(dir, depth=-1, file_only=True):
                 yield path
     else:
         return
-

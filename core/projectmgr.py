@@ -1,8 +1,8 @@
-from calendar import c
 import os
 from glob import glob
 from core.utils import getDateStr
 from .project import Project, isProject
+from .utils import isFolderEmpty
 from .const import *
 
 
@@ -57,9 +57,9 @@ class ProjectMgr(object):
                               prj.meta['version'], prj.meta['type'], bkptag))
                 if detail:
                     if len(prj.getNewExtFiles()) > 0:
-                        print("  NewExtFiles:\n    " + "\n    ".join([item[0] for item in prj.getNewExtFiles()]))
+                        print("\033[92m  NewExtFiles:\n    " + "\n    ".join([item[0] for item in prj.getNewExtFiles()]) + "\033[0m")
                     if len(prj.getNewArcFiles()) > 0:
-                        print("  NewArcFiles:\n    " + "\n    ".join([item for item in prj.getNewArcFiles()]))
+                        print("\033[94m  NewArcFiles:\n    " + "\n    ".join([item for item in prj.getNewArcFiles()]) + "\033[0m")
 
     def addProject(self, name, type):
         """Add a new project"""
@@ -67,20 +67,22 @@ class ProjectMgr(object):
         self.prjDict[type].append(prj)
         return prj
         
-
     def backupProjects(self, backupPath: str, saveCfg=True, bkpThresh=BACKUP_THRESHOLD):
         """Backup all projects to backupPath
         :param backupPath: The path to backup projects.
         :param saveCfg: Whether to save configs of projects.
         :param bkpThresh: The backup threshold. (How many days the modified time is ahead of the backup time).
         """
-        for key in self.prjDict:
-            for prj in self.prjDict[key]:
-                createdate = getDateStr(prj.meta['createTime'])
-                year = createdate[0:4]
-                name = ' '.join([createdate, prj.meta['name']])
-                prjbakpath = os.path.join(
-                    backupPath, PROJECT_TYPESTR[key], year, name)
-                if prj.meta['writeTime'] - prj.meta['backupTime'] >= bkpThresh * 86400:
-                    print("Backup {0} to {1}".format(prj.meta['name'], prjbakpath))
-                    prj.backup(prjbakpath, saveCfg=saveCfg)
+        if isFolderEmpty(backupPath):
+            for key in self.prjDict:
+                for prj in self.prjDict[key]:
+                    createdate = getDateStr(prj.meta['createTime'])
+                    year = createdate[0:4]
+                    name = ' '.join([createdate, prj.meta['name']])
+                    prjbakpath = os.path.join(
+                        backupPath, PROJECT_TYPESTR[key], year, name)
+                    if prj.meta['writeTime'] - prj.meta['backupTime'] >= bkpThresh * 86400:
+                        print("Backup {0} to {1}".format(prj.meta['name'], prjbakpath))
+                        prj.backup(prjbakpath, saveCfg=saveCfg)
+        else:
+            print("Warning: please empty the files in backupPath")

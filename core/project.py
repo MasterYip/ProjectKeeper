@@ -27,6 +27,7 @@ class Project(dict):
         Load a project from a path.
         :param prjPath: The path of the project.
         :param create: If the project does not exist, create it when creat=True. If false, raise an exception.
+        
         TODO: Subproject?
         """
         # Config
@@ -95,9 +96,10 @@ class Project(dict):
         return os.path.join(self.path, relpath)
 
     def _getLastModifiedTime(self, depth=TRAVERSE_DEPTH):
-        ltime = self.meta['writeTime']
+        # ltime = self.meta['writeTime']
+        ltime = 0
         for file in traverseFolder(self.path, depth=depth, file_only=True):
-            if os.path.getmtime(file) > ltime:
+            if os.path.getmtime(file) > ltime and os.path.basename(file) != PROJECT_CFG:
                 ltime = os.path.getmtime(file)
         return ltime
 
@@ -122,9 +124,11 @@ class Project(dict):
         os.system('attrib +h ' + '\"' + os.path.join(self.path, PROJECT_CFG) + '\"')
 
     def _update(self):
-        """Update project config file."""
+        """Update project info (Write time only for now).
+        """
         self.meta['writeTime'] = self._getLastModifiedTime()
-        self._save()
+        # FIXME: Maybe it is not a good idea because it will modify config file.
+        # self._save()
 
     # Analysis
     def getNewExtFiles(self):
