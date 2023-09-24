@@ -16,8 +16,13 @@ TYPE_RECREATION = 4
 
 PROJECT_TYPE = [TYPE_STUDY, TYPE_PROJECT, TYPE_WORK,
                 TYPE_DAILY, TYPE_RECREATION, TYPE_OTHER]  # Legacy Support: No.0-4
+
+# Project Type String (Used as directory name when backup)
 PROJECT_TYPESTR = ['Course', 'Project', 'Work',
                    'Daily Life', 'Recreation', 'Other']  # TYPE_OTHER(-1): 'Other'
+# SFTR Directory Name of each project type
+SFTR_PROJECT_DIR = ['1 Course', '2 Project', '3 Work',
+                    '4 Daily Life', '5 Recreation']
 
 TRAVERSE_DEPTH = 3  # Depth of traversing when getting last modified time
 

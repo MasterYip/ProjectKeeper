@@ -117,7 +117,8 @@ class Project(dict):
         self['extFiles'] = self.extFiles
         self['arcFiles'] = self.arcFiles
         # Set it visible to read
-        os.system('attrib -h ' + '\"' + os.path.join(self.path, PROJECT_CFG) + '\"')
+        if (os.path.isfile(os.path.join(self.path, PROJECT_CFG))):
+            os.system('attrib -h ' + '\"' + os.path.join(self.path, PROJECT_CFG) + '\"')
         json.dump(self, open(os.path.join(self.path, PROJECT_CFG), 'w', encoding="utf-8"),
                   indent=4, ensure_ascii=False)
         # Set it invisible

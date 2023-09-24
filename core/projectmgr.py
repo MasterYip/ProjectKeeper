@@ -63,7 +63,9 @@ class ProjectMgr(object):
 
     def addProject(self, name, type):
         """Add a new project"""
-        prj = Project(os.path.join(self.repoPath, PROJECT_TYPESTR[type], name), create=True, initType=type)
+        prj = Project(os.path.join(self.repoPath, SFTR_PROJECT_DIR[type], name), create=True, initType=type)
+        # prj = Project(os.path.join(self.repoPath, PROJECT_TYPESTR[type], name), create=True, initType=type)
+        prj._save()
         self.prjDict[type].append(prj)
         return prj
         
