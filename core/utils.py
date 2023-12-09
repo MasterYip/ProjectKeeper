@@ -60,6 +60,7 @@ def traverseFolder(dir, depth=-1, file_only=True):
     A generator that traverses a folder
     :param dir: folder path
     :param depth: traverse depth, default -1 for unlimited
+    :param file_only: whether to yield files only
     """
     if depth != 0:
         for item in os.listdir(dir):

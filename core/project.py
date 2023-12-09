@@ -1,5 +1,3 @@
-from hmac import new
-from math import e
 import os
 import shutil
 import tempfile
@@ -10,6 +8,7 @@ import time
 import struct
 from datetime import datetime
 from glob import glob
+
 from .const import *
 from .utils import getFileSha256, getDateStr, zipFolder, traverseFolder
 
@@ -21,7 +20,7 @@ def isProject(path: str):
 
 
 class Project(dict):
-
+    # Private
     def __init__(self, prjPath: str, create=False, initType=TYPE_OTHER):
         """
         Load a project from a path.
@@ -131,6 +130,10 @@ class Project(dict):
         # FIXME: Maybe it is not a good idea because it will modify config file.
         # self._save()
 
+    # Public
+    def getPath(self):
+        return self.path
+
     # Analysis
     def getNewExtFiles(self):
         newExtFiles = []
@@ -138,6 +141,7 @@ class Project(dict):
             relpath = self._getRelativePath(file)
             if relpath not in [item[0] for item in self.extFiles] and os.path.isfile(file):
                 newExtFiles.append([relpath, getFileSha256(file)])
+        # TODO: Handle modified files, Duplicate files in different folders, etc.
         return newExtFiles
     
     def getNewArcFiles(self):
@@ -148,6 +152,25 @@ class Project(dict):
                 newArcFiles.append(name)
         return newArcFiles
 
+    def matchCommonFiles(self, pattern, depth=TRAVERSE_DEPTH):
+        """Match common files by pattern.
+        This only searches common files, not including external files and arc files.
+        :param pattern: The re pattern to match.
+        :param depth: The depth to search.
+        """
+        files = []
+        for file0 in os.listdir(self.path):
+            file0 = self._getAbsolutePath(file0)
+            if os.path.isfile(file0):
+                if re.match(pattern, os.path.basename(file0)):
+                    files.append(file0)
+            elif os.path.isdir(file0) and\
+                file0 != self.tmpPath and file0 != self.extPath and file0 != self.arcPath:
+                for file in traverseFolder(file0, depth=depth, file_only=True):
+                    if re.match(pattern, os.path.basename(file)):
+                        files.append(file)
+        return files
+        
     # Backup
     def _backupExtFiles(self, path):
         # FIXME: Not finished
