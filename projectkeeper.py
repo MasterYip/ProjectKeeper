@@ -50,14 +50,13 @@ prjMgr = ProjectMgr("D:\\SFTR")
 
 
 # Backup
-bkpThresh = 1
-# prjMgr.printProjects(detail=True, bkpThresh=bkpThresh)
+bkpThresh = 15
+prjMgr.printProjects(detail=True, bkpThresh=bkpThresh)
 # prjMgr.backupProjects("D:\\SFTR\\PlayerOS\\6 Backup\\Backup", bkpThresh=bkpThresh)
-# prjMgr.backupProjects("test\\bak", saveCfg=False, bkpThresh=0)
 
 
 # Batch Modify
-prjMgr._batchModify(rename2xmind8)
+# prjMgr._batchModify(rename2xmind8)
 # prjMgr._saveProjects()
 
 # prjMgr.addProject("飞行器设计综合实验", TYPE_STUDY)

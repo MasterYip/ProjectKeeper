@@ -23,5 +23,12 @@ def rename2xmind(path):
     print("Total: " + str(tot))
     
 if __name__ == "__main__":
-    DO_OPERATION = True
-    rename2xmind8("D:\\SFTR\\PlayerOS")
+    # DO_OPERATION = True
+    # rename2xmind8("D:\\SFTR\\PlayerOS")
+
+    # 要在PowerShell中运行的命令
+    powershell_command = 'Get-Process'
+
+    # 使用os.system()执行PowerShell命令
+    # os.system(f'powershell -command "{powershell_command}"')
+    os.system("attrib")
