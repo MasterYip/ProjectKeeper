@@ -95,7 +95,7 @@ class Project(dict):
         return os.path.join(self.path, relpath)
 
     def _getLastModifiedTime(self, depth=TRAVERSE_DEPTH):
-        # ltime = self.meta['writeTime']
+        # FIXME: deleting files will not be recorded
         ltime = 0
         for file in traverseFolder(self.path, depth=depth, file_only=True):
             if os.path.getmtime(file) > ltime and os.path.basename(file) != PROJECT_CFG:
