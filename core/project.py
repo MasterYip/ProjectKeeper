@@ -184,7 +184,7 @@ class Project(dict):
         return files
         
     # Backup
-    def _backupExtFilesNew(self, path, relpath, sha256):
+    def _backupExtFileNew(self, path, relpath, sha256):
         """Backup extended files.
 
         Args:
@@ -198,7 +198,7 @@ class Project(dict):
         shutil.copy(src, dst)
         self.extFiles.append([relpath, sha256])
         
-    def _backupExtFilesModified(self, path, relpath, sha256, index):
+    def _backupExtFileMod(self, path, relpath, sha256, index):
         """Backup modified extended files.
 
         Args:
@@ -230,11 +230,11 @@ class Project(dict):
                 sha256 = getFileSha256(file)
                 # Newly added files
                 if relpath not in [item[0] for item in self.extFiles]:
-                    self._backupExtFilesNew(path, relpath, sha256)
+                    self._backupExtFileNew(path, relpath, sha256)
                 else:
                     index = [item[0] for item in self.extFiles].index(relpath)
                     if self.extFiles[index][1] != sha256:
-                        self._backupExtFilesModified(path, relpath, sha256, index)
+                        self._backupExtFileMod(path, relpath, sha256, index)
 
 
     def _backupArcFiles(self, path):
