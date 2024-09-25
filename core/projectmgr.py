@@ -56,8 +56,11 @@ class ProjectMgr(object):
                                   prj.meta['backupTime']),
                               prj.meta['version'], prj.meta['type'], bkptag))
                 if detail:
-                    if len(prj.getNewExtFiles()) > 0:
-                        print("\033[92m  NewExtFiles:\n    " + "\n    ".join([item[0] for item in prj.getNewExtFiles()]) + "\033[0m")
+                    newExtFiles, modifiedExtFiles = prj.getChangedExtFiles()
+                    if len(newExtFiles) > 0:
+                        print("\033[92m  NewExtFiles:\n    " + "\n    ".join([item[0] for item in newExtFiles]) + "\033[0m")
+                    if len(modifiedExtFiles) > 0:
+                        print("\033[93m  ModExtFiles:\n    " + "\n    ".join([item[0] for item in modifiedExtFiles]) + "\033[0m")
                     if len(prj.getNewArcFiles()) > 0:
                         print("\033[94m  NewArcFiles:\n    " + "\n    ".join([item for item in prj.getNewArcFiles()]) + "\033[0m")
 

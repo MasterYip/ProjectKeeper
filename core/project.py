@@ -135,14 +135,26 @@ class Project(dict):
         return self.path
 
     # Analysis
-    def getNewExtFiles(self):
+    def getChangedExtFiles(self):
+        """Get new extended files in project.
+        
+        Returns:
+            list: lists of new extended files and modified extended files.
+        """
         newExtFiles = []
+        modifiedExtFiles = []
         for file in glob(os.path.join(self.path, PROJECT_EXT, '**'), recursive=True):
-            relpath = self._getRelativePath(file)
-            if relpath not in [item[0] for item in self.extFiles] and os.path.isfile(file):
-                newExtFiles.append([relpath, getFileSha256(file)])
-        # TODO: Handle modified files, Duplicate files in different folders, etc.
-        return newExtFiles
+            if os.path.isfile(file):
+                relpath = self._getRelativePath(file)
+                sha256 = getFileSha256(file)
+                # New extended files
+                if relpath not in [item[0] for item in self.extFiles]:
+                    newExtFiles.append([relpath, sha256])
+                else:
+                    index = [item[0] for item in self.extFiles].index(relpath)
+                    if self.extFiles[index][1] != sha256:
+                        modifiedExtFiles.append([relpath, sha256])
+        return newExtFiles, modifiedExtFiles
     
     def getNewArcFiles(self):
         newArcFiles = []
@@ -172,14 +184,58 @@ class Project(dict):
         return files
         
     # Backup
+    def _backupExtFilesNew(self, path, relpath, sha256):
+        """Backup extended files.
+
+        Args:
+            path (str): Backup destination path.
+            relpath (str): relative path of the file.
+            sha256 (str): sha256 value of the file.
+        """
+        src = self._getAbsolutePath(relpath)
+        dst = os.path.join(path, relpath)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy(src, dst)
+        self.extFiles.append([relpath, sha256])
+        
+    def _backupExtFilesModified(self, path, relpath, sha256, index):
+        """Backup modified extended files.
+
+        Args:
+            path (str): Backup destination path.
+            relpath (str): relative path of the file.
+            sha256 (str): sha256 value of the file.
+            index (int): index of the file in extFiles list.
+        """
+        src = self._getAbsolutePath(relpath)
+        dst = os.path.join(path, relpath)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy(src, dst)
+        self.extFiles[index][1] = sha256
+    
     def _backupExtFiles(self, path):
-        # FIXME: Not finished
-        for relpath, sha256 in self.getNewExtFiles():
-            src = self._getAbsolutePath(relpath)
-            dst = os.path.join(path, relpath)
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.copy(src, dst)
-            self.extFiles.append([relpath, sha256])
+        """Backup extended files.
+
+        Args:
+            path (str): Backup destination.
+        Note:
+            1. For newly added files, append them to extFiles list, backup them to path.
+            2. For modified files, update the sha256 value in extFiles list, backup them to path
+            (BaiduCloud will rename them with number suffix). 
+            3. For newly added duplicated files with sha256 repeated, deem them as new files.
+        """
+        for file in glob(os.path.join(self.path, PROJECT_EXT, '**'), recursive=True):
+            if os.path.isfile(file):
+                relpath = self._getRelativePath(file)
+                sha256 = getFileSha256(file)
+                # Newly added files
+                if relpath not in [item[0] for item in self.extFiles]:
+                    self._backupExtFilesNew(path, relpath, sha256)
+                else:
+                    index = [item[0] for item in self.extFiles].index(relpath)
+                    if self.extFiles[index][1] != sha256:
+                        self._backupExtFilesModified(path, relpath, sha256, index)
+
 
     def _backupArcFiles(self, path):
         arcdir = os.path.join(path, PROJECT_ARC)
