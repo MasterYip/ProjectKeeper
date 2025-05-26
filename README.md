@@ -15,3 +15,7 @@ A git-like software that helps organize and back up files in projects. Your reli
     ```
 
     Just run it in powershell outside vscode.
+
+- json.load的encoding参数在python3.9中弃用
+
+- Use opencv conda env.

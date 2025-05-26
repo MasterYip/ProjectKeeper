@@ -65,7 +65,7 @@ class Project(dict):
 
     def _load(self):
         with open(self.cfgPath, 'r', encoding='utf-8') as cfgfile:
-            data = json.load(cfgfile, encoding='utf-8')
+            data = json.load(cfgfile)
         self.meta = data.get('meta', {})
         self.extFiles = data.get('extFiles', [])
         self.arcFiles = data.get('arcFiles', [])
