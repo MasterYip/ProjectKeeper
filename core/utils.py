@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-
+# NOTE: This is computationally expensive
 def getFileSha256(filename):
     sha256_hash = hashlib.sha256()
     with open(filename, "rb") as f:
