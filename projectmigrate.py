@@ -93,6 +93,11 @@ def executeCopy(manifestPath):
     backupBeforeCopy = manifest.get('backup_before_copy', False)
     backupRoot = _normalizePathForWindows(manifest.get('backup_root'))
 
+    print('Manifest: {0}'.format(os.path.abspath(manifestPath)))
+    print('Repo: {0}'.format(os.path.abspath(repoPath)))
+    print('Destination: {0}'.format(destinationRoot))
+    print('Projects selected: {0}'.format(len(selectedProjects)))
+
     prjMgr = ProjectMgr(repoPath)
     results = prjMgr.copySelectedProjects(
         destinationRoot=destinationRoot,
@@ -107,6 +112,7 @@ def executeCopy(manifestPath):
         backupPath=backupRoot,
         saveCfg=copyOpt.get('save_cfg_before_backup', True),
         keepTypeDir=copyOpt.get('keep_type_dir', True),
+        verbose=True,
     )
 
     print('Copy completed.')

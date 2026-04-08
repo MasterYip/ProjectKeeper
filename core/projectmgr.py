@@ -106,7 +106,8 @@ class ProjectMgr(object):
                              backupBeforeCopy=False,
                              backupPath=None,
                              saveCfg=True,
-                             keepTypeDir=True):
+                             keepTypeDir=True,
+                             verbose=True):
         """Copy selected projects for migration.
 
         Args:
@@ -120,33 +121,55 @@ class ProjectMgr(object):
         if backupBeforeCopy:
             backupPath = self._ensureAccessibleDir(backupPath, label='backupPath')
 
+        if verbose:
+            print('Migration started')
+            print('  Destination: {0}'.format(destinationRoot))
+            print('  Selected projects: {0}'.format(len(selections)))
+            print('  Options: copy_project={0}, copy_event={1}, copy_ext={2}, copy_temp={3}, include_config={4}, overwrite={5}, keep_type_dir={6}'
+                  .format(copyProject, copyEvent, copyExt, copyTemp, includeConfig, overwrite, keepTypeDir))
+            if backupBeforeCopy:
+                print('  Backup before copy: True ({0})'.format(backupPath))
+            else:
+                print('  Backup before copy: False')
+
         results = {
             'copied': [],
             'failed': [],
             'backups': []
         }
 
-        for item in selections:
+        total = len(selections)
+        for idx, item in enumerate(selections, start=1):
             name = item.get('name')
             typeValue = item.get('type')
+            if verbose:
+                print('[{0}/{1}] {2}'.format(idx, total, name))
             prj, key = self.getProject(name, type=typeValue)
             if prj is None:
                 results['failed'].append({
                     'name': name,
                     'reason': 'Project not found'
                 })
+                if verbose:
+                    print('  ✗ Project not found')
                 continue
 
             try:
                 if backupBeforeCopy:
+                    if verbose:
+                        print('  - Backing up...')
                     bkp = self._backupProjectForMigration(prj, key, backupPath, saveCfg=saveCfg)
                     results['backups'].append({'name': name, 'path': bkp})
+                    if verbose:
+                        print('    Backup path: {0}'.format(bkp))
 
                 dstParent = destinationRoot
                 if keepTypeDir:
                     dstParent = os.path.join(destinationRoot, PROJECT_TYPESTR[key])
                 os.makedirs(dstParent, exist_ok=True)
                 dst = os.path.join(dstParent, prj.meta.get('name'))
+                if verbose:
+                    print('  - Copying to: {0}'.format(dst))
                 summary = prj.copyTo(
                     dst,
                     copyProject=copyProject,
@@ -157,11 +180,21 @@ class ProjectMgr(object):
                     overwrite=overwrite
                 )
                 results['copied'].append(summary)
+                if verbose:
+                    print('    ✓ Done (common={0}, event={1}, ext={2}, temp={3}, cfg={4})'
+                          .format(summary['copiedCommonFiles'], summary['copiedEvent'],
+                                  summary['copiedExt'], summary['copiedTemp'], summary['copiedConfig']))
             except Exception as ex:
                 results['failed'].append({
                     'name': name,
                     'reason': str(ex)
                 })
+                if verbose:
+                    print('  ✗ Failed: {0}'.format(ex))
+
+        if verbose:
+            print('Migration finished: copied={0}, failed={1}, backups={2}'
+                  .format(len(results['copied']), len(results['failed']), len(results['backups'])))
 
         return results
 
