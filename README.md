@@ -27,13 +27,15 @@ You can now generate a yaml manifest, edit selection and copy options, then exec
 1. Generate manifest:
 
     ```terminal
-    python projectmigrate.py generate-manifest --repo "D:\\SFTR" --output migration_manifest.yaml --dest "E:\\MigrationTarget"
+    python projectmigrate.py generate-manifest --repo "D:\\SFTR" --output migration_manifest.yaml --dest "Z:\\"
     ```
 
 2. Edit `migration_manifest.yaml`:
    - set `selected_projects[*].copy: true` for projects you want to migrate
    - configure `copy_options` (`copy_project`, `copy_event`, `copy_ext`, ...)
    - optional: `backup_before_copy: true` and set `backup_root`
+
+> Note: Use `net use` to check the network drive UNC path.
 
 3. Run copy:
 

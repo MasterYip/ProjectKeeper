@@ -21,6 +21,12 @@ def _typeStr2Value(typeStr):
     return None
 
 
+def _normalizePathForWindows(path):
+    if os.name == 'nt' and isinstance(path, str) and len(path) == 2 and path[1] == ':':
+        return path + '\\'
+    return path
+
+
 def buildMigrationManifest(prjMgr, repoPath, destinationRoot=''):
     """Build a migration manifest template."""
     manifest = {
@@ -67,7 +73,7 @@ def executeCopy(manifestPath):
         manifest = yaml.safe_load(file)
 
     repoPath = manifest.get('repo_path')
-    destinationRoot = manifest.get('destination_root')
+    destinationRoot = _normalizePathForWindows(manifest.get('destination_root'))
     if not repoPath or not destinationRoot:
         raise ValueError('manifest.repo_path and manifest.destination_root are required.')
 
@@ -85,7 +91,7 @@ def executeCopy(manifestPath):
 
     copyOpt = manifest.get('copy_options', {})
     backupBeforeCopy = manifest.get('backup_before_copy', False)
-    backupRoot = manifest.get('backup_root')
+    backupRoot = _normalizePathForWindows(manifest.get('backup_root'))
 
     prjMgr = ProjectMgr(repoPath)
     results = prjMgr.copySelectedProjects(

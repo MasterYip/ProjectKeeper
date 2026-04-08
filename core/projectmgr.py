@@ -73,6 +73,27 @@ class ProjectMgr(object):
         prj.backup(prjbakpath, saveCfg=saveCfg)
         return prjbakpath
 
+    def _ensureAccessibleDir(self, path, label='path'):
+        path = os.path.abspath(path)
+        if os.name == 'nt':
+            drive, _ = os.path.splitdrive(path)
+            if drive:
+                driveRoot = drive + os.sep
+                if not os.path.exists(driveRoot):
+                    raise FileNotFoundError(
+                        '{0} drive is not accessible: {1}. If this is a network share, use a UNC path '
+                        '(e.g. \\\\server\\share) or map the drive in the same terminal session.'.format(
+                            label, driveRoot)
+                    )
+        try:
+            os.makedirs(path, exist_ok=True)
+        except FileNotFoundError as ex:
+            raise FileNotFoundError(
+                'Cannot access {0}: {1}. If this is a network share, use a UNC path '
+                '(e.g. \\\\server\\share).'.format(label, path)
+            ) from ex
+        return path
+
     def copySelectedProjects(self,
                              destinationRoot,
                              selections,
@@ -93,10 +114,11 @@ class ProjectMgr(object):
             selections (list): list of {'name': str, 'type': int(optional)}.
             keepTypeDir (bool): keep project type folder in destination.
         """
-        destinationRoot = os.path.abspath(destinationRoot)
-        os.makedirs(destinationRoot, exist_ok=True)
+        destinationRoot = self._ensureAccessibleDir(destinationRoot, label='destinationRoot')
         if backupBeforeCopy and not backupPath:
             raise ValueError('backupPath is required when backupBeforeCopy is True.')
+        if backupBeforeCopy:
+            backupPath = self._ensureAccessibleDir(backupPath, label='backupPath')
 
         results = {
             'copied': [],
