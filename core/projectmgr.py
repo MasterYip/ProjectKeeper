@@ -42,9 +42,110 @@ class ProjectMgr(object):
             for prj in self.prjDict[key]:
                 prj._save()
 
+    def listProjects(self):
+        """List all projects with brief metadata."""
+        data = []
+        for key in self.prjDict:
+            for prj in self.prjDict[key]:
+                data.append({
+                    'name': prj.meta.get('name'),
+                    'type': key,
+                    'typeStr': PROJECT_TYPESTR[key],
+                    'path': prj.getPath(),
+                })
+        return data
+
+    def getProject(self, name, type=None):
+        """Get a project by name and optional type."""
+        keys = [type] if type is not None else list(self.prjDict.keys())
+        for key in keys:
+            for prj in self.prjDict.get(key, []):
+                if prj.meta.get('name') == name:
+                    return prj, key
+        return None, None
+
+    def _backupProjectForMigration(self, prj, key, backupPath, saveCfg=True):
+        createdate = getDateStr(prj.meta['createTime'])
+        year = createdate[0:4]
+        name = ' '.join([createdate, prj.meta['name']])
+        prjbakpath = os.path.join(backupPath, PROJECT_TYPESTR[key], year, name)
+        os.makedirs(prjbakpath, exist_ok=True)
+        prj.backup(prjbakpath, saveCfg=saveCfg)
+        return prjbakpath
+
+    def copySelectedProjects(self,
+                             destinationRoot,
+                             selections,
+                             copyProject=True,
+                             copyEvent=True,
+                             copyExt=True,
+                             copyTemp=False,
+                             includeConfig=True,
+                             overwrite=False,
+                             backupBeforeCopy=False,
+                             backupPath=None,
+                             saveCfg=True,
+                             keepTypeDir=True):
+        """Copy selected projects for migration.
+
+        Args:
+            destinationRoot (str): root output path.
+            selections (list): list of {'name': str, 'type': int(optional)}.
+            keepTypeDir (bool): keep project type folder in destination.
+        """
+        destinationRoot = os.path.abspath(destinationRoot)
+        os.makedirs(destinationRoot, exist_ok=True)
+        if backupBeforeCopy and not backupPath:
+            raise ValueError('backupPath is required when backupBeforeCopy is True.')
+
+        results = {
+            'copied': [],
+            'failed': [],
+            'backups': []
+        }
+
+        for item in selections:
+            name = item.get('name')
+            typeValue = item.get('type')
+            prj, key = self.getProject(name, type=typeValue)
+            if prj is None:
+                results['failed'].append({
+                    'name': name,
+                    'reason': 'Project not found'
+                })
+                continue
+
+            try:
+                if backupBeforeCopy:
+                    bkp = self._backupProjectForMigration(prj, key, backupPath, saveCfg=saveCfg)
+                    results['backups'].append({'name': name, 'path': bkp})
+
+                dstParent = destinationRoot
+                if keepTypeDir:
+                    dstParent = os.path.join(destinationRoot, PROJECT_TYPESTR[key])
+                os.makedirs(dstParent, exist_ok=True)
+                dst = os.path.join(dstParent, prj.meta.get('name'))
+                summary = prj.copyTo(
+                    dst,
+                    copyProject=copyProject,
+                    copyEvent=copyEvent,
+                    copyExt=copyExt,
+                    copyTemp=copyTemp,
+                    includeConfig=includeConfig,
+                    overwrite=overwrite
+                )
+                results['copied'].append(summary)
+            except Exception as ex:
+                results['failed'].append({
+                    'name': name,
+                    'reason': str(ex)
+                })
+
+        return results
+
     def printProjects(self, detail=False, bkpThresh=BACKUP_THRESHOLD):
         for key in self.prjDict:
-            print('['+PROJECT_TYPESTR[key]+']')
+            print('[' + PROJECT_TYPESTR[key] + ']')
             for prj in self.prjDict[key]:
                 if prj.meta['writeTime'] - prj.meta['backupTime'] >= bkpThresh * 86400:
                     bkptag = '■'
@@ -71,7 +172,7 @@ class ProjectMgr(object):
         prj._save()
         self.prjDict[type].append(prj)
         return prj
-        
+
     def backupProjects(self, backupPath: str, saveCfg=True, bkpThresh=BACKUP_THRESHOLD):
         """Backup all projects to backupPath
         :param backupPath: The path to backup projects.

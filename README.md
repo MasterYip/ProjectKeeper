@@ -19,3 +19,24 @@ A git-like software that helps organize and back up files in projects. Your reli
 - json.load的encoding参数在python3.9中弃用
 
 - Use opencv conda env.
+
+## Migration / Copy selected projects
+
+You can now generate a yaml manifest, edit selection and copy options, then execute copy.
+
+1. Generate manifest:
+
+    ```terminal
+    python projectmigrate.py generate-manifest --repo "D:\\SFTR" --output migration_manifest.yaml --dest "E:\\MigrationTarget"
+    ```
+
+2. Edit `migration_manifest.yaml`:
+   - set `selected_projects[*].copy: true` for projects you want to migrate
+   - configure `copy_options` (`copy_project`, `copy_event`, `copy_ext`, ...)
+   - optional: `backup_before_copy: true` and set `backup_root`
+
+3. Run copy:
+
+    ```terminal
+    python projectmigrate.py copy --manifest migration_manifest.yaml
+    ```

@@ -26,7 +26,7 @@ class Project(dict):
         Load a project from a path.
         :param prjPath: The path of the project.
         :param create: If the project does not exist, create it when creat=True. If false, raise an exception.
-        
+
         TODO: Subproject?
         """
         # Config
@@ -90,7 +90,7 @@ class Project(dict):
     def _getRelativePath(self, path):
         """Get relative path of a file in project."""
         return os.path.relpath(path, self.path)
-    
+
     def _getAbsolutePath(self, relpath):
         return os.path.join(self.path, relpath)
 
@@ -130,6 +130,86 @@ class Project(dict):
         # FIXME: Maybe it is not a good idea because it will modify config file.
         # self._save()
 
+    def _copyCommonFiles(self, dstPath):
+        """Copy common files (exclude temp/ext/arc folders)."""
+        copied = 0
+        exclude_names = {PROJECT_TMP, PROJECT_EXT, PROJECT_ARC}
+        for item in os.listdir(self.path):
+            src = os.path.join(self.path, item)
+            dst = os.path.join(dstPath, item)
+            if item in exclude_names:
+                continue
+            if os.path.isfile(src):
+                shutil.copy2(src, dst)
+                copied += 1
+            elif os.path.isdir(src):
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+                for _, _, files in os.walk(src):
+                    copied += len(files)
+        return copied
+
+    def copyTo(self,
+               dstPath,
+               copyProject=True,
+               copyEvent=True,
+               copyExt=True,
+               copyTemp=False,
+               includeConfig=True,
+               overwrite=False):
+        """Copy project content to a new directory.
+
+        Args:
+            dstPath (str): destination project directory.
+            copyProject (bool): copy common project files.
+            copyEvent (bool): copy event records folder.
+            copyExt (bool): copy extension package folder.
+            copyTemp (bool): copy temp folder.
+            includeConfig (bool): copy project config file.
+            overwrite (bool): allow existing destination directory.
+
+        Returns:
+            dict: copy summary.
+        """
+        dstPath = os.path.abspath(dstPath)
+        if os.path.exists(dstPath) and (not overwrite):
+            raise FileExistsError("Destination exists: {0}".format(dstPath))
+
+        os.makedirs(dstPath, exist_ok=True)
+
+        summary = {
+            'project': self.meta.get('name', os.path.basename(self.path)),
+            'srcPath': self.path,
+            'dstPath': dstPath,
+            'copiedCommonFiles': 0,
+            'copiedEvent': False,
+            'copiedExt': False,
+            'copiedTemp': False,
+            'copiedConfig': False
+        }
+
+        if copyProject:
+            summary['copiedCommonFiles'] = self._copyCommonFiles(dstPath)
+
+        if copyEvent and os.path.isdir(self.arcPath):
+            shutil.copytree(self.arcPath, os.path.join(dstPath, PROJECT_ARC), dirs_exist_ok=True)
+            summary['copiedEvent'] = True
+
+        if copyExt and os.path.isdir(self.extPath):
+            shutil.copytree(self.extPath, os.path.join(dstPath, PROJECT_EXT), dirs_exist_ok=True)
+            summary['copiedExt'] = True
+
+        if copyTemp and os.path.isdir(self.tmpPath):
+            shutil.copytree(self.tmpPath, os.path.join(dstPath, PROJECT_TMP), dirs_exist_ok=True)
+            summary['copiedTemp'] = True
+
+        if includeConfig:
+            cfgSrc = self.cfgPath if os.path.isfile(self.cfgPath) else self.cfgPathLegacy
+            if os.path.isfile(cfgSrc):
+                shutil.copy2(cfgSrc, os.path.join(dstPath, os.path.basename(cfgSrc)))
+                summary['copiedConfig'] = True
+
+        return summary
+
     # Public
     def getPath(self):
         return self.path
@@ -137,7 +217,7 @@ class Project(dict):
     # Analysis
     def getChangedExtFiles(self):
         """Get new extended files in project.
-        
+
         Returns:
             list: lists of new extended files and modified extended files.
         """
@@ -155,7 +235,7 @@ class Project(dict):
                     if self.extFiles[index][1] != sha256:
                         modifiedExtFiles.append([relpath, sha256])
         return newExtFiles, modifiedExtFiles
-    
+
     def getNewArcFiles(self):
         newArcFiles = []
         for arcfile in glob(os.path.join(self.path, PROJECT_ARC, '*')):
@@ -177,12 +257,12 @@ class Project(dict):
                 if re.match(pattern, os.path.basename(file0)):
                     files.append(file0)
             elif os.path.isdir(file0) and\
-                file0 != self.tmpPath and file0 != self.extPath and file0 != self.arcPath:
+                    file0 != self.tmpPath and file0 != self.extPath and file0 != self.arcPath:
                 for file in traverseFolder(file0, depth=depth, file_only=True):
                     if re.match(pattern, os.path.basename(file)):
                         files.append(file)
         return files
-        
+
     # Backup
     def _backupExtFileNew(self, path, relpath, sha256):
         """Backup extended files.
@@ -197,7 +277,7 @@ class Project(dict):
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copy(src, dst)
         self.extFiles.append([relpath, sha256])
-        
+
     def _backupExtFileMod(self, path, relpath, sha256, index):
         """Backup modified extended files.
 
@@ -212,7 +292,7 @@ class Project(dict):
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copy(src, dst)
         self.extFiles[index][1] = sha256
-    
+
     def _backupExtFiles(self, path):
         """Backup extended files.
 
@@ -236,14 +316,13 @@ class Project(dict):
                     if self.extFiles[index][1] != sha256:
                         self._backupExtFileMod(path, relpath, sha256, index)
 
-
     def _backupArcFiles(self, path):
         arcdir = os.path.join(path, PROJECT_ARC)
         os.makedirs(arcdir, exist_ok=True)
         for name in self.getNewArcFiles():
             src = os.path.join(self.path, PROJECT_ARC, name)
             if os.path.isdir(src):
-                zipFolder(src, os.path.join(arcdir, name+'.zip'))
+                zipFolder(src, os.path.join(arcdir, name + '.zip'))
             else:
                 shutil.copy(src, os.path.join(arcdir, name))
             self.arcFiles.append(name)
@@ -259,7 +338,7 @@ class Project(dict):
         with zipfile.ZipFile(zipname, 'w') as zipf:
             for file in commonFiles:
                 relpath = self._getRelativePath(file)
-                if re.match('(?!'+'|'.join([PROJECT_TMP, PROJECT_EXT, PROJECT_ARC])+').*', relpath) and os.path.isfile(file):
+                if re.match('(?!' + '|'.join([PROJECT_TMP, PROJECT_EXT, PROJECT_ARC]) + ').*', relpath) and os.path.isfile(file):
                     zipf.write(file, relpath)
 
     def backup(self, path, saveCfg=True):
