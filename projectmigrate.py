@@ -16,6 +16,8 @@ def _getYamlModule():
 
 
 def _typeStr2Value(typeStr):
+    if typeStr in SFTR_PROJECT_DIR:
+        return SFTR_PROJECT_DIR.index(typeStr)
     if typeStr in PROJECT_TYPESTR:
         return PROJECT_TYPESTR.index(typeStr)
     return None
@@ -52,7 +54,7 @@ def buildMigrationManifest(prjMgr, repoPath, destinationRoot=''):
     for item in prjMgr.listProjects():
         manifest['selected_projects'].append({
             'name': item['name'],
-            'type': item['typeStr'],
+            'type': item['typeDir'],
             'copy': False,
         })
     return manifest

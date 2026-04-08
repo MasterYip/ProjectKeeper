@@ -8,6 +8,11 @@ from .const import *
 
 class ProjectMgr(object):
 
+    def _getTypeDirName(self, typeValue):
+        if 0 <= typeValue < len(SFTR_PROJECT_DIR):
+            return SFTR_PROJECT_DIR[typeValue]
+        return PROJECT_TYPESTR[typeValue]
+
     def __init__(self, repoPath: str):
         self.repoPath = os.path.abspath(repoPath)
         self.prjDict = dict([[key, []] for key in PROJECT_TYPE])
@@ -51,6 +56,7 @@ class ProjectMgr(object):
                     'name': prj.meta.get('name'),
                     'type': key,
                     'typeStr': PROJECT_TYPESTR[key],
+                    'typeDir': self._getTypeDirName(key),
                     'path': prj.getPath(),
                 })
         return data
@@ -165,7 +171,7 @@ class ProjectMgr(object):
 
                 dstParent = destinationRoot
                 if keepTypeDir:
-                    dstParent = os.path.join(destinationRoot, PROJECT_TYPESTR[key])
+                    dstParent = os.path.join(destinationRoot, self._getTypeDirName(key))
                 os.makedirs(dstParent, exist_ok=True)
                 dst = os.path.join(dstParent, prj.meta.get('name'))
                 if verbose:
