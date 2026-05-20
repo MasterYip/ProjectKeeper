@@ -1,12 +1,12 @@
 version: 1
-generated_at: '2026-04-08T12:48:43'
+generated_at: '2026-05-20T22:09:21'
 repo_path: D:\SFTR
-destination_root: \\Rcamc-r9000p\sftr
+destination_root: \\server\share\ProjectMigration
 backup_before_copy: false
 backup_root: ''
 copy_options:
   copy_project: true
-  copy_event: false
+  copy_event: true
   copy_ext: true
   copy_temp: false
   include_config: true
@@ -14,42 +14,105 @@ copy_options:
   keep_type_dir: true
   save_cfg_before_backup: true
 selected_projects:
+- name: Aerospace_Engineering
+  type: 1 Course
+  copy: false
+- name: Automation
+  type: 1 Course
+  copy: false
 - name: ComputerApplications
-  type: Course
-  copy: true
+  type: 1 Course
+  copy: false
 - name: ComputerEngineering
-  type: Course
-  copy: true
+  type: 1 Course
+  copy: false
 - name: ComputerScience
-  type: Course
-  copy: true
+  type: 1 Course
+  copy: false
+- name: Economics
+  type: 1 Course
+  copy: false
+- name: EE_Engineering
+  type: 1 Course
+  copy: false
+- name: English
+  type: 1 Course
+  copy: false
+- name: Mathematics
+  type: 1 Course
+  copy: false
+- name: ME_Engineering
+  type: 1 Course
+  copy: false
+- name: Philosophy
+  type: 1 Course
+  copy: false
+- name: Physics
+  type: 1 Course
+  copy: false
 - name: Robotics
-  type: Course
-  copy: true
+  type: 1 Course
+  copy: false
+- name: 中医学
+  type: 1 Course
+  copy: false
 - name: 人工智能
-  type: Course
-  copy: true
+  type: 1 Course
+  copy: false
+- name: 人类文明导论
+  type: 1 Course
+  copy: false
+- name: ED_projects
+  type: 2 Project
+  copy: false
 - name: MasterThesis
-  type: Project
-  copy: true
+  type: 2 Project
+  copy: false
 - name: PredictiveDiffusionPlanner
-  type: Project
-  copy: true
+  type: 2 Project
+  copy: false
 - name: 信息技术实践与应用
-  type: Project
-  copy: true
+  type: 2 Project
+  copy: false
 - name: 文献工程
-  type: Project
-  copy: true
+  type: 2 Project
+  copy: false
+- name: 电子设计资料总库
+  type: 2 Project
+  copy: false
+- name: HIT个人事务
+  type: 3 Work
+  copy: false
+- name: HIT个人事迹档案库
+  type: 3 Work
+  copy: false
 - name: RCAMC实验室事务
-  type: Work
-  copy: true
+  type: 3 Work
+  copy: false
 - name: 生涯规划
-  type: Work
-  copy: true
+  type: 3 Work
+  copy: false
 - name: 人际交往与社会工程
-  type: Daily Life
-  copy: true
+  type: 4 Daily Life
+  copy: false
 - name: 日常生活事务
-  type: Daily Life
-  copy: true
+  type: 4 Daily Life
+  copy: false
+- name: 体育竞技
+  type: 5 Recreation
+  copy: false
+- name: 文学鉴赏
+  type: 5 Recreation
+  copy: false
+- name: 电子游戏
+  type: 5 Recreation
+  copy: false
+- name: 终极幻想
+  type: 5 Recreation
+  copy: false
+- name: 美术计划
+  type: 5 Recreation
+  copy: false
+- name: 音乐计划
+  type: 5 Recreation
+  copy: false
