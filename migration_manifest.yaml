@@ -1,9 +1,11 @@
 version: 1
-generated_at: '2026-05-20T22:09:21'
+generated_at: '2026-05-20T22:24:03'
 repo_path: D:\SFTR
 destination_root: \\server\share\ProjectMigration
 backup_before_copy: false
 backup_root: ''
+repo_copy_options:
+  copy_playeros: false
 copy_options:
   copy_project: true
   copy_event: true

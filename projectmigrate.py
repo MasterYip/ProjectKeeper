@@ -38,6 +38,9 @@ def buildMigrationManifest(prjMgr, repoPath, destinationRoot=''):
         'destination_root': destinationRoot,
         'backup_before_copy': False,
         'backup_root': '',
+        'repo_copy_options': {
+            'copy_playeros': False,
+        },
         'copy_options': {
             'copy_project': True,
             'copy_event': True,
@@ -87,44 +90,80 @@ def executeCopy(manifestPath):
                 'type': _typeStr2Value(item.get('type'))
             })
 
-    if len(selectedProjects) == 0:
-        print('No projects selected. Set selected_projects[*].copy = true in manifest.')
-        return
-
     copyOpt = manifest.get('copy_options', {})
+    repoCopyOpt = manifest.get('repo_copy_options', {})
     backupBeforeCopy = manifest.get('backup_before_copy', False)
     backupRoot = _normalizePathForWindows(manifest.get('backup_root'))
+    copiedRepoFolders = []
+    failedRepoFolders = []
+
+    if len(selectedProjects) == 0 and (not repoCopyOpt.get('copy_playeros', False)):
+        print('No items selected. Set selected_projects[*].copy = true or enable repo_copy_options.copy_playeros.')
+        return
 
     print('Manifest: {0}'.format(os.path.abspath(manifestPath)))
     print('Repo: {0}'.format(os.path.abspath(repoPath)))
     print('Destination: {0}'.format(destinationRoot))
     print('Projects selected: {0}'.format(len(selectedProjects)))
+    if repoCopyOpt.get('copy_playeros', False):
+        print('Repo folders selected: {0}'.format(SFTR_PLAYEROS_DIR))
 
     prjMgr = ProjectMgr(repoPath)
-    results = prjMgr.copySelectedProjects(
-        destinationRoot=destinationRoot,
-        selections=selectedProjects,
-        copyProject=copyOpt.get('copy_project', True),
-        copyEvent=copyOpt.get('copy_event', True),
-        copyExt=copyOpt.get('copy_ext', True),
-        copyTemp=copyOpt.get('copy_temp', False),
-        includeConfig=copyOpt.get('include_config', True),
-        overwrite=copyOpt.get('overwrite', False),
-        backupBeforeCopy=backupBeforeCopy,
-        backupPath=backupRoot,
-        saveCfg=copyOpt.get('save_cfg_before_backup', True),
-        keepTypeDir=copyOpt.get('keep_type_dir', True),
-        verbose=True,
-    )
+    if len(selectedProjects) > 0:
+        results = prjMgr.copySelectedProjects(
+            destinationRoot=destinationRoot,
+            selections=selectedProjects,
+            copyProject=copyOpt.get('copy_project', True),
+            copyEvent=copyOpt.get('copy_event', True),
+            copyExt=copyOpt.get('copy_ext', True),
+            copyTemp=copyOpt.get('copy_temp', False),
+            includeConfig=copyOpt.get('include_config', True),
+            overwrite=copyOpt.get('overwrite', False),
+            backupBeforeCopy=backupBeforeCopy,
+            backupPath=backupRoot,
+            saveCfg=copyOpt.get('save_cfg_before_backup', True),
+            keepTypeDir=copyOpt.get('keep_type_dir', True),
+            verbose=True,
+        )
+    else:
+        results = {
+            'copied': [],
+            'failed': [],
+            'backups': []
+        }
+
+    if repoCopyOpt.get('copy_playeros', False):
+        try:
+            copiedRepoFolders.append(
+                prjMgr.copyRepoFolder(
+                    SFTR_PLAYEROS_DIR,
+                    destinationRoot,
+                    overwrite=copyOpt.get('overwrite', False),
+                    verbose=True,
+                )
+            )
+        except Exception as ex:
+            failedRepoFolders.append({
+                'name': SFTR_PLAYEROS_DIR,
+                'reason': str(ex)
+            })
+            print('[repo] {0}'.format(SFTR_PLAYEROS_DIR))
+            print('  ✗ Failed: {0}'.format(ex))
 
     print('Copy completed.')
     print('Copied: {0}'.format(len(results['copied'])))
     print('Failed: {0}'.format(len(results['failed'])))
+    if len(copiedRepoFolders) > 0:
+        print('Repo folders copied: {0}'.format(len(copiedRepoFolders)))
+    if len(failedRepoFolders) > 0:
+        print('Repo folders failed: {0}'.format(len(failedRepoFolders)))
     if len(results['backups']) > 0:
         print('Backups: {0}'.format(len(results['backups'])))
 
     for failed in results['failed']:
         print('  - {0}: {1}'.format(failed['name'], failed['reason']))
+    for failed in failedRepoFolders:
+        print('  - repo/{0}: {1}'.format(failed['name'], failed['reason']))
 
 
 def main():

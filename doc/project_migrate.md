@@ -2,13 +2,16 @@
 
 `projectmigrate.py` is used to copy selected projects from one ProjectKeeper repository to a new location.
 
+It can also optionally copy the `PlayerOS` folder under the SFTR repository root.
+
 The migration flow is:
 
 1. Generate a manifest YAML file.
 2. Edit the manifest to choose which projects to copy.
 3. Configure copy options.
 4. Optionally back up each project before copying.
-5. Execute the copy task and watch the progress output.
+5. Optionally copy the repo-level `PlayerOS` folder.
+6. Execute the copy task and watch the progress output.
 
 ## Prerequisites
 
@@ -42,6 +45,7 @@ Open `migration_manifest.yaml` and:
 - set `selected_projects[*].copy` to `true` for the projects you want to migrate
 - set `destination_root`
 - set copy options
+- optionally enable `repo_copy_options.copy_playeros`
 - optionally enable backup before copy
 
 ### 3. Execute migration
@@ -69,6 +73,8 @@ repo_path: 'D:\SFTR'
 destination_root: '\\server\share\ProjectMigration'
 backup_before_copy: true
 backup_root: 'D:\SFTR\PlayerOS\6 Backup\Backup'
+repo_copy_options:
+ copy_playeros: true
 copy_options:
  copy_project: true
  copy_event: true
@@ -95,77 +101,86 @@ selected_projects:
 ### Top-level fields
 
 - `version`
- 	- manifest schema version
+  - manifest schema version
 
 - `generated_at`
- 	- manifest generation time
+  - manifest generation time
 
 - `repo_path`
- 	- source ProjectKeeper repository root
+  - source ProjectKeeper repository root
 
 - `destination_root`
- 	- root directory where copied projects will be written
- 	- if `keep_type_dir: true`, project type folders are created under this root
+  - root directory where copied projects will be written
+  - if `keep_type_dir: true`, project type folders are created under this root
 
 - `backup_before_copy`
- 	- whether to run ProjectKeeper backup before migration copy
+  - whether to run ProjectKeeper backup before migration copy
 
 - `backup_root`
- 	- backup destination root
- 	- required when `backup_before_copy: true`
+  - backup destination root
+  - required when `backup_before_copy: true`
+
+### `repo_copy_options`
+
+- `copy_playeros`
+  - copy the `PlayerOS` folder under `repo_path`
+  - source path is `repo_path\PlayerOS`
+  - destination path is `destination_root\PlayerOS`
+  - this is independent from `selected_projects`
+  - this does not use `keep_type_dir`
 
 ### `copy_options`
 
 - `copy_project`
- 	- copy common project files and folders
- 	- excludes `_Temp`, `_Extension Package`, and `_Event Records`
+  - copy common project files and folders
+  - excludes `_Temp`, `_Extension Package`, and `_Event Records`
 
 - `copy_event`
- 	- copy `_Event Records`
+  - copy `_Event Records`
 
 - `copy_ext`
- 	- copy `_Extension Package`
+  - copy `_Extension Package`
 
 - `copy_temp`
- 	- copy `_Temp`
+  - copy `_Temp`
 
 - `include_config`
- 	- copy `.projectcfg`
- 	- if the project is legacy, `_CacheInfo` is copied instead
+  - copy `.projectcfg`
+  - if the project is legacy, `_CacheInfo` is copied instead
 
 - `overwrite`
- 	- allow copy into an existing destination project directory
- 	- when `false`, an existing destination project folder causes that project to fail
+  - allow copy into an existing destination project directory
+  - when `false`, an existing destination project folder causes that project to fail
 
 - `keep_type_dir`
- 	- preserve project type folders under `destination_root`
- 	- examples: `1 Course`, `2 Project`, `3 Work`
+  - preserve project type folders under `destination_root`
+  - examples: `1 Course`, `2 Project`, `3 Work`
 
 - `save_cfg_before_backup`
- 	- passed to backup logic before migration copy
- 	- useful when backup is enabled
+  - passed to backup logic before migration copy
+  - useful when backup is enabled
 
 ### `selected_projects`
 
 Each entry has:
 
 - `name`
- 	- project name
+  - project name
 
 - `type`
- 	- project type folder name
- 	- use folder names from `SFTR_PROJECT_DIR`, not display names
- 	- examples:
-  		- `1 Course`
-  		- `2 Project`
-  		- `3 Work`
-  		- `4 Daily Life`
-  		- `5 Recreation`
- 	- `Other` may appear for projects outside the standard SFTR folders
+  - project type folder name
+  - use folder names from `SFTR_PROJECT_DIR`, not display names
+  - examples:
+    - `1 Course`
+    - `2 Project`
+    - `3 Work`
+    - `4 Daily Life`
+    - `5 Recreation`
+  - `Other` may appear for projects outside the standard SFTR folders
 
 - `copy`
- 	- `true` means this project will be migrated
- 	- `false` means ignored
+  - `true` means this project will be migrated
+  - `false` means ignored
 
 ## Destination Layout
 
@@ -187,10 +202,17 @@ If `keep_type_dir: false`, the copied project may be written to:
 \\server\share\ProjectMigration\MasterThesis
 ```
 
+If `repo_copy_options.copy_playeros: true`, then `PlayerOS` is copied to:
+
+```text
+\\server\share\ProjectMigration\PlayerOS
+```
+
 ## Notes
 
 - Generated manifests now use folder names such as `2 Project` instead of display names such as `Project`.
 - Older manifests using display names are still accepted for compatibility.
+- `PlayerOS` can be migrated even when no project is selected.
 - If no project has `copy: true`, the script exits without copying anything.
 - If a destination path is not reachable, the script raises a clear error before copy starts.
 - For network shares, UNC paths are more reliable than mapped drive letters.

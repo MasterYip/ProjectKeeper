@@ -4,6 +4,8 @@ repo_path: D:\SFTR
 destination_root: \\Rcamc-r9000p\sftr
 backup_before_copy: false
 backup_root: ''
+repo_copy_options:
+  copy_playeros: true
 copy_options:
   copy_project: true
   copy_event: false

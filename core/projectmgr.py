@@ -1,4 +1,5 @@
 import os
+import shutil
 from glob import glob
 from core.utils import getDateStr
 from .project import Project, isProject
@@ -99,6 +100,31 @@ class ProjectMgr(object):
                 '(e.g. \\\\server\\share).'.format(label, path)
             ) from ex
         return path
+
+    def copyRepoFolder(self, folderName, destinationRoot, overwrite=False, verbose=True):
+        destinationRoot = self._ensureAccessibleDir(destinationRoot, label='destinationRoot')
+        src = os.path.join(self.repoPath, folderName)
+        if not os.path.isdir(src):
+            raise FileNotFoundError('Repository folder not found: {0}'.format(src))
+
+        dst = os.path.join(destinationRoot, folderName)
+        if verbose:
+            print('[repo] {0}'.format(folderName))
+            print('  - Copying to: {0}'.format(dst))
+
+        if os.path.exists(dst) and (not overwrite):
+            raise FileExistsError('Destination exists: {0}'.format(dst))
+
+        shutil.copytree(src, dst, dirs_exist_ok=overwrite)
+
+        if verbose:
+            print('    ✓ Done')
+
+        return {
+            'name': folderName,
+            'srcPath': src,
+            'dstPath': dst
+        }
 
     def copySelectedProjects(self,
                              destinationRoot,

@@ -23,6 +23,7 @@ PROJECT_TYPESTR = ['Course', 'Project', 'Work',
 # SFTR Directory Name of each project type
 SFTR_PROJECT_DIR = ['1 Course', '2 Project', '3 Work',
                     '4 Daily Life', '5 Recreation']
+SFTR_PLAYEROS_DIR = 'PlayerOS'
 
 TRAVERSE_DEPTH = 3  # Depth of traversing when getting last modified time
 
