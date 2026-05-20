@@ -1,0 +1,55 @@
+version: 1
+generated_at: '2026-04-08T12:48:43'
+repo_path: D:\SFTR
+destination_root: \\Rcamc-r9000p\sftr
+backup_before_copy: false
+backup_root: ''
+copy_options:
+  copy_project: true
+  copy_event: false
+  copy_ext: true
+  copy_temp: false
+  include_config: true
+  overwrite: false
+  keep_type_dir: true
+  save_cfg_before_backup: true
+selected_projects:
+- name: ComputerApplications
+  type: Course
+  copy: true
+- name: ComputerEngineering
+  type: Course
+  copy: true
+- name: ComputerScience
+  type: Course
+  copy: true
+- name: Robotics
+  type: Course
+  copy: true
+- name: 人工智能
+  type: Course
+  copy: true
+- name: MasterThesis
+  type: Project
+  copy: true
+- name: PredictiveDiffusionPlanner
+  type: Project
+  copy: true
+- name: 信息技术实践与应用
+  type: Project
+  copy: true
+- name: 文献工程
+  type: Project
+  copy: true
+- name: RCAMC实验室事务
+  type: Work
+  copy: true
+- name: 生涯规划
+  type: Work
+  copy: true
+- name: 人际交往与社会工程
+  type: Daily Life
+  copy: true
+- name: 日常生活事务
+  type: Daily Life
+  copy: true
