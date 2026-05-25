@@ -115,7 +115,13 @@ class ProjectMgr(object):
         if os.path.exists(dst) and (not overwrite):
             raise FileExistsError('Destination exists: {0}'.format(dst))
 
-        shutil.copytree(src, dst, dirs_exist_ok=overwrite)
+        if overwrite and os.path.exists(dst):
+            if os.path.isfile(dst):
+                os.remove(dst)
+            else:
+                shutil.rmtree(dst)
+
+        shutil.copytree(src, dst)
 
         if verbose:
             print('    ✓ Done')

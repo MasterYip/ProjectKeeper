@@ -151,6 +151,7 @@ selected_projects:
 - `overwrite`
   - allow copy into an existing destination project directory
   - when `false`, an existing destination project folder causes that project to fail
+  - when `true`, selected destination files and folders are deleted first, then copied again
 
 - `keep_type_dir`
   - preserve project type folders under `destination_root`
@@ -241,6 +242,8 @@ Either:
 
 - delete the existing destination project folder first, or
 - set `copy_options.overwrite: true`
+
+With `overwrite: true`, ProjectKeeper deletes the selected destination entries before copying them again. If the remote file is locked or you do not have delete permission on the share, the copy can still fail.
 
 ### Network path not accessible
 

@@ -1,6 +1,5 @@
 import os
 import shutil
-import tempfile
 import json
 import zipfile
 import re
@@ -139,14 +138,28 @@ class Project(dict):
             dst = os.path.join(dstPath, item)
             if item in exclude_names:
                 continue
+            self._copyPath(src, dst, overwrite=True)
             if os.path.isfile(src):
-                shutil.copy2(src, dst)
                 copied += 1
             elif os.path.isdir(src):
-                shutil.copytree(src, dst, dirs_exist_ok=True)
                 for _, _, files in os.walk(src):
                     copied += len(files)
         return copied
+
+    def _removePath(self, path):
+        if os.path.isfile(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+
+    def _copyPath(self, src, dst, overwrite=False):
+        if overwrite and os.path.exists(dst):
+            self._removePath(dst)
+        if os.path.isfile(src):
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
+        elif os.path.isdir(src):
+            shutil.copytree(src, dst)
 
     def copyTo(self,
                dstPath,
@@ -191,21 +204,21 @@ class Project(dict):
             summary['copiedCommonFiles'] = self._copyCommonFiles(dstPath)
 
         if copyEvent and os.path.isdir(self.arcPath):
-            shutil.copytree(self.arcPath, os.path.join(dstPath, PROJECT_ARC), dirs_exist_ok=True)
+            self._copyPath(self.arcPath, os.path.join(dstPath, PROJECT_ARC), overwrite=overwrite)
             summary['copiedEvent'] = True
 
         if copyExt and os.path.isdir(self.extPath):
-            shutil.copytree(self.extPath, os.path.join(dstPath, PROJECT_EXT), dirs_exist_ok=True)
+            self._copyPath(self.extPath, os.path.join(dstPath, PROJECT_EXT), overwrite=overwrite)
             summary['copiedExt'] = True
 
         if copyTemp and os.path.isdir(self.tmpPath):
-            shutil.copytree(self.tmpPath, os.path.join(dstPath, PROJECT_TMP), dirs_exist_ok=True)
+            self._copyPath(self.tmpPath, os.path.join(dstPath, PROJECT_TMP), overwrite=overwrite)
             summary['copiedTemp'] = True
 
         if includeConfig:
             cfgSrc = self.cfgPath if os.path.isfile(self.cfgPath) else self.cfgPathLegacy
             if os.path.isfile(cfgSrc):
-                shutil.copy2(cfgSrc, os.path.join(dstPath, os.path.basename(cfgSrc)))
+                self._copyPath(cfgSrc, os.path.join(dstPath, os.path.basename(cfgSrc)), overwrite=overwrite)
                 summary['copiedConfig'] = True
 
         return summary
