@@ -18,12 +18,16 @@ def modify(prj, *args, **kwargs):
     else:
         prj.meta['type'] = 5
 
+
 def print_matchfiles(prj, *args, **kwargs):
     print(prj.meta['name'])
     print("\n".join(prj.matchCommonFiles("(.*)\.xmind$", depth=-1)))
 
+
 global rename2xmind8_tot
 rename2xmind8_tot = 0
+
+
 def rename2xmind8(prj, *args, **kwargs):
     global rename2xmind8_tot
     print(prj.meta['name'])
@@ -32,9 +36,12 @@ def rename2xmind8(prj, *args, **kwargs):
         rename2xmind8_tot += 1
         print(file + "8")
     print("Total: " + str(rename2xmind8_tot))
-    
+
+
 global rename2xmind_tot
 rename2xmind_tot = 0
+
+
 def rename2xmind(prj, *args, **kwargs):
     global rename2xmind_tot
     print(prj.meta['name'])
@@ -44,13 +51,15 @@ def rename2xmind(prj, *args, **kwargs):
         print(file[:-1])
     print("Total: " + str(rename2xmind_tot))
 
+
 # Init ProjectMgr
 # prjMgr = ProjectMgr("test")
 prjMgr = ProjectMgr("D:\\SFTR")
+# prjMgr = ProjectMgr("\\\\Rcamc-r9000p\\sftr")
 
 
 # Backup
-bkpThresh = 15
+bkpThresh = 1
 prjMgr.printProjects(detail=True, bkpThresh=bkpThresh)
 # prjMgr.backupProjects("D:\\SFTR\\PlayerOS\\6 Backup\\Backup", bkpThresh=bkpThresh)
 
